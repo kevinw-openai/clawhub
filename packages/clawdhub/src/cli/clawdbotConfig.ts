@@ -30,6 +30,13 @@ type ClawdbotConfig = {
   };
 };
 
+export type ResolvedOpenclawAgent = {
+  id: string;
+  name?: string;
+  workspace: string;
+  default?: boolean;
+};
+
 export type ClawdbotSkillRoots = {
   roots: string[];
   labels: Record<string, string>;
@@ -93,6 +100,52 @@ export async function resolveClawdbotDefaultWorkspace(): Promise<string | null> 
   return openclawWorkspace || null;
 }
 
+export async function resolveOpenclawAgent(agentId: string): Promise<ResolvedOpenclawAgent | null> {
+  const normalizedId = agentId.trim();
+  if (!normalizedId) return null;
+
+  const config = await readOpenclawConfig();
+  if (!config) return null;
+
+  const listedAgent = (config.agents?.list ?? []).find((entry) => entry.id === normalizedId);
+  const listedWorkspace = resolveUserPath(listedAgent?.workspace ?? "");
+  if (listedWorkspace) {
+    return {
+      id: normalizedId,
+      name: listedAgent?.name?.trim() || undefined,
+      workspace: listedWorkspace,
+      default: listedAgent?.default,
+    };
+  }
+
+  const routedAgent = config.routing?.agents?.[normalizedId];
+  const routedWorkspace = resolveUserPath(routedAgent?.workspace ?? "");
+  if (routedWorkspace) {
+    return {
+      id: normalizedId,
+      name: routedAgent?.name?.trim() || undefined,
+      workspace: routedWorkspace,
+      default: normalizedId === "main",
+    };
+  }
+
+  if (normalizedId === "main") {
+    const defaultWorkspace = resolveUserPath(
+      config.agents?.defaults?.workspace ?? config.agent?.workspace ?? "",
+    );
+    if (defaultWorkspace) {
+      return {
+        id: "main",
+        name: listedAgent?.name?.trim() || undefined,
+        workspace: defaultWorkspace,
+        default: true,
+      };
+    }
+  }
+
+  return null;
+}
+
 function resolveClawdbotStateDir() {
   const override = process.env.CLAWDBOT_STATE_DIR?.trim();
   if (override) return resolveUserPath(override);
@@ -105,7 +158,7 @@ function resolveClawdbotConfigPath() {
   return join(resolveClawdbotStateDir(), "clawdbot.json");
 }
 
-function resolveOpenclawStateDir() {
+export function resolveOpenclawStateDir() {
   const override = process.env.OPENCLAW_STATE_DIR?.trim();
   if (override) return resolveUserPath(override);
   return join(resolveHome(), ".openclaw");

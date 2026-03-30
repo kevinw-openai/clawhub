@@ -208,6 +208,19 @@ const packageFilesValidator = v.array(
   }),
 );
 
+const agentStatsValidator = v.object({
+  installs: v.number(),
+});
+
+const agentManifestValidator = v.object({
+  schemaVersion: v.literal(1),
+  slug: v.string(),
+  displayName: v.string(),
+  summary: v.string(),
+  suggestedAgentId: v.string(),
+  skillDependencies: v.optional(v.array(v.string())),
+});
+
 const skills = defineTable({
   slug: v.string(),
   displayName: v.string(),
@@ -344,6 +357,26 @@ const skillSlugAliases = defineTable({
   .index("by_skill", ["skillId"])
   .index("by_owner", ["ownerUserId"])
   .index("by_owner_publisher", ["ownerPublisherId"]);
+
+const agents = defineTable({
+  slug: v.string(),
+  displayName: v.string(),
+  summary: v.string(),
+  suggestedAgentId: v.string(),
+  skillDependencies: v.optional(v.array(v.string())),
+  ownerUserId: v.id("users"),
+  ownerPublisherId: v.optional(v.id("publishers")),
+  files: packageFilesValidator,
+  manifest: agentManifestValidator,
+  softDeletedAt: v.optional(v.number()),
+  stats: agentStatsValidator,
+  createdAt: v.number(),
+  updatedAt: v.number(),
+})
+  .index("by_slug", ["slug"])
+  .index("by_owner", ["ownerUserId"])
+  .index("by_owner_publisher", ["ownerPublisherId"])
+  .index("by_active_updated", ["softDeletedAt", "updatedAt"]);
 
 const souls = defineTable({
   slug: v.string(),
@@ -1253,6 +1286,7 @@ export default defineSchema({
   publisherMembers,
   skills,
   skillSlugAliases,
+  agents,
   packages,
   packageReleases,
   packageSearchDigest,

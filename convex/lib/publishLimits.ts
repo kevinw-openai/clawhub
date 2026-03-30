@@ -14,6 +14,6 @@ export function getPublishFileSizeError(path: string) {
   return `File "${path}" exceeds 10MB limit`;
 }
 
-export function getPublishTotalSizeError(target: "skill bundle" | "package") {
+export function getPublishTotalSizeError(target: "skill bundle" | "agent bundle" | "package") {
   return `${target[0]?.toUpperCase() ?? ""}${target.slice(1)} exceeds 50MB limit`;
 }

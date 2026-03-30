@@ -57,6 +57,18 @@ export declare const CliPublishFileSchema: import("arktype/internal/variants/obj
     contentType?: string | undefined;
 }, {}>;
 export type CliPublishFile = (typeof CliPublishFileSchema)[inferred];
+export declare const AGENT_MANIFEST_FILENAME: "openclaw.agent.json";
+export declare const AGENT_REQUIRED_MARKDOWN_FILES: readonly ["AGENTS.md", "SOUL.md", "IDENTITY.md", "TOOLS.md", "USER.md"];
+export declare const AGENT_ALLOWED_FILES: readonly ["AGENTS.md", "SOUL.md", "IDENTITY.md", "TOOLS.md", "USER.md", "openclaw.agent.json"];
+export declare const OpenClawAgentManifestSchema: import("arktype/internal/variants/object.ts").ObjectType<{
+    schemaVersion: 1;
+    slug: string;
+    displayName: string;
+    summary: string;
+    suggestedAgentId: string;
+    skillDependencies?: string[] | undefined;
+}, {}>;
+export type OpenClawAgentManifest = (typeof OpenClawAgentManifestSchema)[inferred];
 export declare const PublishSourceSchema: import("arktype/internal/variants/object.ts").ObjectType<{
     kind: "github";
     url: string;
@@ -95,6 +107,21 @@ export declare const CliPublishRequestSchema: import("arktype/internal/variants/
     } | undefined;
 }, {}>;
 export type CliPublishRequest = (typeof CliPublishRequestSchema)[inferred];
+export declare const CliAgentPublishRequestSchema: import("arktype/internal/variants/object.ts").ObjectType<{
+    slug: string;
+    displayName: string;
+    summary: string;
+    suggestedAgentId: string;
+    files: {
+        path: string;
+        size: number;
+        storageId: string;
+        sha256: string;
+        contentType?: string | undefined;
+    }[];
+    skillDependencies?: string[] | undefined;
+}, {}>;
+export type CliAgentPublishRequest = (typeof CliAgentPublishRequestSchema)[inferred];
 export declare const ApiCliPublishResponseSchema: import("arktype/internal/variants/object.ts").ObjectType<{
     ok: true;
     skillId: string;
@@ -275,6 +302,55 @@ export declare const ApiV1PublishResponseSchema: import("arktype/internal/varian
 }, {}>;
 export declare const ApiV1DeleteResponseSchema: import("arktype/internal/variants/object.ts").ObjectType<{
     ok: true;
+}, {}>;
+export declare const ApiV1AgentPublishResponseSchema: import("arktype/internal/variants/object.ts").ObjectType<{
+    ok: true;
+    agentId: string;
+}, {}>;
+export declare const ApiV1AgentListResponseSchema: import("arktype/internal/variants/object.ts").ObjectType<{
+    items: {
+        slug: string;
+        displayName: string;
+        summary: string;
+        suggestedAgentId: string;
+        stats: {
+            installs: number;
+        };
+        createdAt: number;
+        updatedAt: number;
+        owner: {
+            handle: string | null;
+            displayName?: string | null | undefined;
+            image?: string | null | undefined;
+        } | null;
+        skillDependencies?: string[] | undefined;
+    }[];
+    nextCursor: string | null;
+}, {}>;
+export declare const ApiV1AgentResponseSchema: import("arktype/internal/variants/object.ts").ObjectType<{
+    agent: {
+        slug: string;
+        displayName: string;
+        summary: string;
+        suggestedAgentId: string;
+        files: {
+            path: string;
+            size: number;
+            sha256: string;
+            contentType?: string | null | undefined;
+        }[];
+        stats: {
+            installs: number;
+        };
+        createdAt: number;
+        updatedAt: number;
+        skillDependencies?: string[] | undefined;
+    } | null;
+    owner: {
+        handle: string | null;
+        displayName?: string | null | undefined;
+        image?: string | null | undefined;
+    } | null;
 }, {}>;
 export declare const ApiV1SkillRenameResponseSchema: import("arktype/internal/variants/object.ts").ObjectType<{
     ok: true;

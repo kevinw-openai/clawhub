@@ -34,8 +34,24 @@ type SoulMeta = {
   owner: string | null;
 };
 
+type AgentMetaSource = {
+  slug: string;
+  owner?: string | null;
+  displayName?: string | null;
+  summary?: string | null;
+};
+
+type AgentMeta = {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+  owner: string | null;
+};
+
 const DEFAULT_DESCRIPTION = "ClawHub — a fast skill registry for agents, with vector search.";
 const DEFAULT_SOUL_DESCRIPTION = "SoulHub — the home for SOUL.md bundles and personal system lore.";
+const DEFAULT_AGENT_DESCRIPTION = "ClawHub agents are read-only OpenClaw agent bundles you can inspect and install.";
 const OG_SKILL_IMAGE_LAYOUT_VERSION = "5";
 const OG_SOUL_IMAGE_LAYOUT_VERSION = "1";
 
@@ -97,6 +113,26 @@ export async function fetchSoulMeta(slug: string) {
   }
 }
 
+export async function fetchAgentMeta(slug: string) {
+  try {
+    const apiBase = getApiBase();
+    const url = new URL(`/api/v1/agents/${encodeURIComponent(slug)}`, apiBase);
+    const response = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as {
+      agent?: { displayName?: string; summary?: string | null } | null;
+      owner?: { handle?: string | null } | null;
+    };
+    return {
+      displayName: payload.agent?.displayName ?? null,
+      summary: payload.agent?.summary ?? null,
+      owner: payload.owner?.handle ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function buildSkillMeta(source: SkillMetaSource): SkillMeta {
   const siteUrl = getSiteUrl();
   const owner = clean(source.owner);
@@ -142,6 +178,28 @@ export function buildSoulMeta(source: SoulMetaSource): SoulMeta {
     title,
     description: truncate(description, 200),
     image: `${siteUrl}/og/soul.png?${imageParams.toString()}`,
+    url,
+    owner: owner || null,
+  };
+}
+
+export function buildAgentMeta(source: AgentMetaSource): AgentMeta {
+  const siteUrl = getSiteUrl();
+  const owner = clean(source.owner);
+  const displayName = clean(source.displayName) || clean(source.slug);
+  const summary = clean(source.summary);
+  const title = `${displayName} — ClawHub`;
+  const description =
+    summary || (owner ? `OpenClaw agent by @${owner} on ClawHub.` : DEFAULT_AGENT_DESCRIPTION);
+  const url = `${siteUrl}/agents/${source.slug}`;
+  const imageParams = new URLSearchParams();
+  imageParams.set("v", OG_SKILL_IMAGE_LAYOUT_VERSION);
+  imageParams.set("slug", source.slug);
+  if (owner) imageParams.set("owner", owner);
+  return {
+    title,
+    description: truncate(description, 200),
+    image: `${siteUrl}/og/skill.png?${imageParams.toString()}`,
     url,
     owner: owner || null,
   };

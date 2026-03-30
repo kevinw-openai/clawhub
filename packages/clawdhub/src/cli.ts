@@ -15,6 +15,11 @@ import { cmdInspect } from "./cli/commands/inspect.js";
 import { cmdBanUser, cmdSetRole } from "./cli/commands/moderation.js";
 import { cmdMergeSkill, cmdRenameSkill } from "./cli/commands/ownership.js";
 import {
+  cmdAgentExport,
+  cmdAgentInstall,
+  cmdAgentPublish,
+} from "./cli/commands/agents.js";
+import {
   cmdExplorePackages,
   cmdInspectPackage,
   cmdPublishPackage,
@@ -330,6 +335,7 @@ program
   });
 
 const skill = program.command("skill").description("Manage published skills");
+const agent = program.command("agent").description("Export, publish, and install OpenClaw agents");
 const packageCmd = program
   .command("package")
   .description("Browse and publish OpenClaw packages");
@@ -412,6 +418,35 @@ skill
   .action(async (sourceSlug, targetSlug, options) => {
     const opts = await resolveGlobalOpts();
     await cmdMergeSkill(opts, sourceSlug, targetSlug, options, isInputAllowed());
+  });
+
+agent
+  .command("export")
+  .description("Export an OpenClaw agent workspace as a publishable bundle")
+  .argument("<agent-id>", "OpenClaw agent id")
+  .option("--out <dir>", "Output directory (default: ./<agent-id>)")
+  .action(async (agentId, options) => {
+    const opts = await resolveGlobalOpts();
+    await cmdAgentExport(opts, agentId, options);
+  });
+
+agent
+  .command("publish")
+  .description("Publish an exported agent bundle")
+  .argument("<path>", "Bundle folder path")
+  .action(async (folder) => {
+    const opts = await resolveGlobalOpts();
+    await cmdAgentPublish(opts, folder);
+  });
+
+agent
+  .command("install")
+  .description("Install an agent bundle from the registry into OpenClaw")
+  .argument("<slug>", "Agent slug")
+  .option("--id <agent-id>", "Override the installed OpenClaw agent id")
+  .action(async (slug, options) => {
+    const opts = await resolveGlobalOpts();
+    await cmdAgentInstall(opts, slug, options);
   });
 
 program

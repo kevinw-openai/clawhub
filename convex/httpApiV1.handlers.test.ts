@@ -1,7 +1,8 @@
 /* @vitest-environment node */
 import { unzipSync } from "fflate";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { RATE_LIMITS } from "./lib/httpRateLimit";
 
 vi.mock("@convex-dev/auth/server", () => ({
@@ -17,8 +18,13 @@ vi.mock("./skills", () => ({
   publishVersionForUser: vi.fn(),
 }));
 
+vi.mock("./agents", () => ({
+  publishAgentForUser: vi.fn(),
+}));
+
 const { getAuthUserId } = await import("@convex-dev/auth/server");
 const { getOptionalApiTokenUserId, requireApiTokenUser } = await import("./lib/apiTokenAuth");
+const { publishAgentForUser } = await import("./agents");
 const { publishVersionForUser } = await import("./skills");
 const { __handlers } = await import("./httpApiV1");
 
@@ -83,6 +89,7 @@ beforeEach(() => {
   vi.mocked(getOptionalApiTokenUserId).mockReset();
   vi.mocked(getOptionalApiTokenUserId).mockResolvedValue(null);
   vi.mocked(requireApiTokenUser).mockReset();
+  vi.mocked(publishAgentForUser).mockReset();
   vi.mocked(publishVersionForUser).mockReset();
 });
 
@@ -99,6 +106,194 @@ describe("httpApiV1 handlers", () => {
     }
     expect(await response.json()).toEqual({ results: [] });
     expect(runAction).not.toHaveBeenCalled();
+  });
+
+  it("lists public agents", async () => {
+    const response = await __handlers.listAgentsV1Handler(
+      makeCtx({
+        runQuery: vi.fn(async (query: unknown) => {
+          if (query === api.agents.listPublicPage) {
+            return {
+              items: [
+                {
+                  agent: {
+                    slug: "demo-agent",
+                    displayName: "Demo Agent",
+                    summary: "Helpful agent",
+                    suggestedAgentId: "demo-agent",
+                    skillDependencies: ["alpha-skill"],
+                    stats: { installs: 3 },
+                    createdAt: 1,
+                    updatedAt: 2,
+                  },
+                  owner: {
+                    handle: "alice",
+                    displayName: "Alice",
+                    image: null,
+                  },
+                },
+              ],
+              nextCursor: null,
+            };
+          }
+          return null;
+        }),
+      }),
+      new Request("https://example.com/api/v1/agents"),
+    );
+
+    if (response.status !== 200) throw new Error(await response.text());
+    expect(await response.json()).toEqual({
+      items: [
+        {
+          slug: "demo-agent",
+          displayName: "Demo Agent",
+          summary: "Helpful agent",
+          suggestedAgentId: "demo-agent",
+          skillDependencies: ["alpha-skill"],
+          stats: { installs: 3 },
+          createdAt: 1,
+          updatedAt: 2,
+          owner: {
+            handle: "alice",
+            displayName: "Alice",
+            image: null,
+          },
+        },
+      ],
+      nextCursor: null,
+    });
+  });
+
+  it("returns agent detail and file contents", async () => {
+    const storageGet = vi.fn(async () => new Blob(["# Agent\n"], { type: "text/markdown" }));
+    const runQuery = vi.fn(async (query: unknown) => {
+      if (query === api.agents.getBySlug) {
+        return {
+          agent: {
+            _id: "agents:1",
+            slug: "demo-agent",
+            displayName: "Demo Agent",
+            summary: "Helpful agent",
+            suggestedAgentId: "demo-agent",
+            skillDependencies: ["alpha-skill"],
+            files: [
+              {
+                path: "AGENTS.md",
+                size: 8,
+                sha256: "a".repeat(64),
+                contentType: "text/markdown",
+              },
+            ],
+            stats: { installs: 2 },
+            createdAt: 1,
+            updatedAt: 2,
+          },
+          owner: { handle: "alice", displayName: "Alice", image: null },
+        };
+      }
+      if (query === internal.agents.getAgentBySlugInternal) {
+        return {
+          _id: "agents:1",
+          files: [
+            {
+              path: "AGENTS.md",
+              size: 8,
+              sha256: "a".repeat(64),
+              storageId: "storage:agents" as Id<"_storage">,
+              contentType: "text/markdown",
+            },
+          ],
+        };
+      }
+      return null;
+    });
+
+    const detailResponse = await __handlers.agentsGetRouterV1Handler(
+      makeCtx({ runQuery, storage: { get: storageGet } }),
+      new Request("https://example.com/api/v1/agents/demo-agent"),
+    );
+    if (detailResponse.status !== 200) throw new Error(await detailResponse.text());
+    expect(await detailResponse.json()).toEqual({
+      agent: {
+        slug: "demo-agent",
+        displayName: "Demo Agent",
+        summary: "Helpful agent",
+        suggestedAgentId: "demo-agent",
+        skillDependencies: ["alpha-skill"],
+        files: [
+          {
+            path: "AGENTS.md",
+            size: 8,
+            sha256: "a".repeat(64),
+            contentType: "text/markdown",
+          },
+        ],
+        stats: { installs: 2 },
+        createdAt: 1,
+        updatedAt: 2,
+      },
+      owner: {
+        handle: "alice",
+        displayName: "Alice",
+        image: null,
+      },
+    });
+
+    const fileResponse = await __handlers.agentsGetRouterV1Handler(
+      makeCtx({ runQuery, storage: { get: storageGet } }),
+      new Request("https://example.com/api/v1/agents/demo-agent/file?path=AGENTS.md"),
+    );
+    expect(fileResponse.status).toBe(200);
+    expect(await fileResponse.text()).toBe("# Agent\n");
+    expect(storageGet).toHaveBeenCalledWith("storage:agents");
+  });
+
+  it("publishes agents from JSON payloads", async () => {
+    vi.mocked(requireApiTokenUser).mockResolvedValue({
+      userId: "users:1",
+      user: { _id: "users:1", role: "user" },
+    } as never);
+    vi.mocked(publishAgentForUser).mockResolvedValue({
+      agentId: "agents:1" as Id<"agents">,
+    });
+
+    const response = await __handlers.publishAgentV1Handler(
+      makeCtx({}),
+      new Request("https://example.com/api/v1/agents", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer clh_test",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slug: "demo-agent",
+          displayName: "Demo Agent",
+          summary: "Helpful agent",
+          suggestedAgentId: "demo-agent",
+          skillDependencies: ["alpha-skill"],
+          files: [
+            {
+              path: "AGENTS.md",
+              size: 8,
+              storageId: "storage:agents",
+              sha256: "a".repeat(64),
+            },
+          ],
+        }),
+      }),
+    );
+
+    if (response.status !== 200) throw new Error(await response.text());
+    expect(vi.mocked(publishAgentForUser)).toHaveBeenCalledWith(
+      expect.anything(),
+      "users:1",
+      expect.objectContaining({
+        slug: "demo-agent",
+        suggestedAgentId: "demo-agent",
+      }),
+    );
+    expect(await response.json()).toEqual({ ok: true, agentId: "agents:1" });
   });
 
   it("users/restore forbids non-admin api tokens", async () => {

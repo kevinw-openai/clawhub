@@ -21,10 +21,12 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as SoulsIndexRouteImport } from './routes/souls/index'
 import { Route as SkillsIndexRouteImport } from './routes/skills/index'
 import { Route as PluginsIndexRouteImport } from './routes/plugins/index'
 import { Route as PackagesIndexRouteImport } from './routes/packages/index'
+import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as UHandleRouteImport } from './routes/u/$handle'
 import { Route as SoulsSlugRouteImport } from './routes/souls/$slug'
 import { Route as PluginsNewRouteImport } from './routes/plugins/new'
@@ -95,6 +97,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentsIndexRoute = AgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SoulsIndexRoute = SoulsIndexRouteImport.update({
   id: '/souls/',
   path: '/souls/',
@@ -118,6 +125,11 @@ const PackagesIndexRoute = PackagesIndexRouteImport.update({
 const UHandleRoute = UHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsSlugRoute = AgentsSlugRouteImport.update({
+  id: '/agents/$slug',
+  path: '/agents/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SoulsSlugRoute = SoulsSlugRouteImport.update({
@@ -163,6 +175,7 @@ const OwnerSlugRoute = OwnerSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agents/$slug': typeof AgentsSlugRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
@@ -183,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/plugins/new': typeof PluginsNewRoute
   '/souls/$slug': typeof SoulsSlugRoute
   '/u/$handle': typeof UHandleRoute
+  '/agents/': typeof AgentsIndexRoute
   '/packages/': typeof PackagesIndexRoute
   '/plugins/': typeof PluginsIndexRoute
   '/skills/': typeof SkillsIndexRoute
@@ -190,6 +204,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agents/$slug': typeof AgentsSlugRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
@@ -210,6 +225,7 @@ export interface FileRoutesByTo {
   '/plugins/new': typeof PluginsNewRoute
   '/souls/$slug': typeof SoulsSlugRoute
   '/u/$handle': typeof UHandleRoute
+  '/agents': typeof AgentsIndexRoute
   '/packages': typeof PackagesIndexRoute
   '/plugins': typeof PluginsIndexRoute
   '/skills': typeof SkillsIndexRoute
@@ -218,6 +234,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agents/$slug': typeof AgentsSlugRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
@@ -238,6 +255,7 @@ export interface FileRoutesById {
   '/plugins/new': typeof PluginsNewRoute
   '/souls/$slug': typeof SoulsSlugRoute
   '/u/$handle': typeof UHandleRoute
+  '/agents/': typeof AgentsIndexRoute
   '/packages/': typeof PackagesIndexRoute
   '/plugins/': typeof PluginsIndexRoute
   '/skills/': typeof SkillsIndexRoute
@@ -247,6 +265,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agents/$slug'
     | '/about'
     | '/admin'
     | '/dashboard'
@@ -267,6 +286,7 @@ export interface FileRouteTypes {
     | '/plugins/new'
     | '/souls/$slug'
     | '/u/$handle'
+    | '/agents/'
     | '/packages/'
     | '/plugins/'
     | '/skills/'
@@ -274,6 +294,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agents/$slug'
     | '/about'
     | '/admin'
     | '/dashboard'
@@ -294,6 +315,7 @@ export interface FileRouteTypes {
     | '/plugins/new'
     | '/souls/$slug'
     | '/u/$handle'
+    | '/agents'
     | '/packages'
     | '/plugins'
     | '/skills'
@@ -301,6 +323,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agents/$slug'
     | '/about'
     | '/admin'
     | '/dashboard'
@@ -321,6 +344,7 @@ export interface FileRouteTypes {
     | '/plugins/new'
     | '/souls/$slug'
     | '/u/$handle'
+    | '/agents/'
     | '/packages/'
     | '/plugins/'
     | '/skills/'
@@ -329,6 +353,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentsSlugRoute: typeof AgentsSlugRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRoute
@@ -349,6 +374,7 @@ export interface RootRouteChildren {
   PluginsNewRoute: typeof PluginsNewRoute
   SoulsSlugRoute: typeof SoulsSlugRoute
   UHandleRoute: typeof UHandleRoute
+  AgentsIndexRoute: typeof AgentsIndexRoute
   PackagesIndexRoute: typeof PackagesIndexRoute
   PluginsIndexRoute: typeof PluginsIndexRoute
   SkillsIndexRoute: typeof SkillsIndexRoute
@@ -441,6 +467,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/': {
+      id: '/agents/'
+      path: '/agents'
+      fullPath: '/agents/'
+      preLoaderRoute: typeof AgentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/souls/': {
       id: '/souls/'
       path: '/souls'
@@ -474,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/u/$handle'
       fullPath: '/u/$handle'
       preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents/$slug': {
+      id: '/agents/$slug'
+      path: '/agents/$slug'
+      fullPath: '/agents/$slug'
+      preLoaderRoute: typeof AgentsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/souls/$slug': {
@@ -537,6 +577,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentsSlugRoute: AgentsSlugRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   DashboardRoute: DashboardRoute,
@@ -557,6 +598,7 @@ const rootRouteChildren: RootRouteChildren = {
   PluginsNewRoute: PluginsNewRoute,
   SoulsSlugRoute: SoulsSlugRoute,
   UHandleRoute: UHandleRoute,
+  AgentsIndexRoute: AgentsIndexRoute,
   PackagesIndexRoute: PackagesIndexRoute,
   PluginsIndexRoute: PluginsIndexRoute,
   SkillsIndexRoute: SkillsIndexRoute,

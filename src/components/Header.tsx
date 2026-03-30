@@ -93,6 +93,14 @@ export default function Header() {
               Skills
             </Link>
           )}
+          {isSoulMode ? null : (
+            <Link
+              to="/agents"
+              search={{ q: undefined, sort: undefined, dir: undefined, view: undefined }}
+            >
+              Agents
+            </Link>
+          )}
           {isSoulMode ? null : <Link to="/plugins">Plugins</Link>}
           <Link
             to={isSoulMode ? "/souls" : "/skills"}
@@ -171,6 +179,16 @@ export default function Header() {
                     </Link>
                   )}
                 </DropdownMenuItem>
+                {isSoulMode ? null : (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      to="/agents"
+                      search={{ q: undefined, sort: undefined, dir: undefined, view: undefined }}
+                    >
+                      Agents
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {isSoulMode ? null : (
                   <DropdownMenuItem asChild>
                     <Link to="/plugins">Plugins</Link>

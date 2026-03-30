@@ -9,6 +9,7 @@
  */
 
 import type * as appMeta from "../appMeta.js";
+import type * as agents from "../agents.js";
 import type * as auth from "../auth.js";
 import type * as commentModeration from "../commentModeration.js";
 import type * as comments from "../comments.js";
@@ -28,6 +29,7 @@ import type * as githubSoulBackupsNode from "../githubSoulBackupsNode.js";
 import type * as http from "../http.js";
 import type * as httpApi from "../httpApi.js";
 import type * as httpApiV1 from "../httpApiV1.js";
+import type * as httpApiV1_agentsV1 from "../httpApiV1/agentsV1.js";
 import type * as httpApiV1_packagesV1 from "../httpApiV1/packagesV1.js";
 import type * as httpApiV1_shared from "../httpApiV1/shared.js";
 import type * as httpApiV1_skillsV1 from "../httpApiV1/skillsV1.js";
@@ -122,6 +124,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   appMeta: typeof appMeta;
+  agents: typeof agents;
   auth: typeof auth;
   commentModeration: typeof commentModeration;
   comments: typeof comments;
@@ -141,6 +144,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   httpApi: typeof httpApi;
   httpApiV1: typeof httpApiV1;
+  "httpApiV1/agentsV1": typeof httpApiV1_agentsV1;
   "httpApiV1/packagesV1": typeof httpApiV1_packagesV1;
   "httpApiV1/shared": typeof httpApiV1_shared;
   "httpApiV1/skillsV1": typeof httpApiV1_skillsV1;

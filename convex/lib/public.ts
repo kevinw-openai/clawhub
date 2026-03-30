@@ -80,6 +80,26 @@ export type PublicSoul = Pick<
   | "updatedAt"
 >;
 
+export type PublicAgent = Pick<
+  Doc<"agents">,
+  | "_id"
+  | "_creationTime"
+  | "slug"
+  | "displayName"
+  | "summary"
+  | "suggestedAgentId"
+  | "skillDependencies"
+  | "ownerUserId"
+  | "ownerPublisherId"
+  | "stats"
+  | "createdAt"
+  | "updatedAt"
+> & {
+  files: Array<
+    Pick<Doc<"agents">["files"][number], "path" | "size" | "sha256" | "contentType">
+  >;
+};
+
 export function toPublicUser(user: Doc<"users"> | null | undefined): PublicUser | null {
   if (!user || user.deletedAt || user.deactivatedAt) return null;
   return {
@@ -163,5 +183,29 @@ export function toPublicSoul(soul: Doc<"souls"> | null | undefined): PublicSoul 
     stats: soul.stats,
     createdAt: soul.createdAt,
     updatedAt: soul.updatedAt,
+  };
+}
+
+export function toPublicAgent(agent: Doc<"agents"> | null | undefined): PublicAgent | null {
+  if (!agent || agent.softDeletedAt) return null;
+  return {
+    _id: agent._id,
+    _creationTime: agent._creationTime,
+    slug: agent.slug,
+    displayName: agent.displayName,
+    summary: agent.summary,
+    suggestedAgentId: agent.suggestedAgentId,
+    skillDependencies: agent.skillDependencies,
+    ownerUserId: agent.ownerUserId,
+    ownerPublisherId: agent.ownerPublisherId,
+    files: agent.files.map((file) => ({
+      path: file.path,
+      size: file.size,
+      sha256: file.sha256,
+      contentType: file.contentType,
+    })),
+    stats: agent.stats,
+    createdAt: agent.createdAt,
+    updatedAt: agent.updatedAt,
   };
 }

@@ -44,3 +44,23 @@ export type PublicSoul = Pick<
   | "createdAt"
   | "updatedAt"
 >;
+
+export type PublicAgent = Pick<
+  Doc<"agents">,
+  | "_id"
+  | "_creationTime"
+  | "slug"
+  | "displayName"
+  | "summary"
+  | "suggestedAgentId"
+  | "skillDependencies"
+  | "ownerUserId"
+  | "ownerPublisherId"
+  | "stats"
+  | "createdAt"
+  | "updatedAt"
+> & {
+  files: Array<
+    Pick<Doc<"agents">["files"][number], "path" | "size" | "sha256" | "contentType">
+  >;
+};

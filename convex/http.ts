@@ -14,14 +14,17 @@ import {
   searchSkillsHttp,
 } from "./httpApi";
 import {
+  agentsGetRouterV1Http,
   listBundlePluginsV1Http,
   listCodePluginsV1Http,
+  listAgentsV1Http,
   listPackagesV1Http,
   listPluginsV1Http,
   listSkillsV1Http,
   listSoulsV1Http,
   packagesGetRouterV1Http,
   pluginsGetRouterV1Http,
+  publishAgentV1Http,
   publishSkillV1Http,
   publishPackageV1Http,
   publishSoulV1Http,
@@ -71,6 +74,12 @@ http.route({
 });
 
 http.route({
+  path: ApiRoutes.agents,
+  method: "GET",
+  handler: listAgentsV1Http,
+});
+
+http.route({
   path: ApiRoutes.packages,
   method: "GET",
   handler: listPackagesV1Http,
@@ -101,6 +110,12 @@ http.route({
 });
 
 http.route({
+  pathPrefix: `${ApiRoutes.agents}/`,
+  method: "GET",
+  handler: agentsGetRouterV1Http,
+});
+
+http.route({
   pathPrefix: `${ApiRoutes.packages}/`,
   method: "GET",
   handler: packagesGetRouterV1Http,
@@ -116,6 +131,12 @@ http.route({
   path: ApiRoutes.skills,
   method: "POST",
   handler: publishSkillV1Http,
+});
+
+http.route({
+  path: ApiRoutes.agents,
+  method: "POST",
+  handler: publishAgentV1Http,
 });
 
 http.route({

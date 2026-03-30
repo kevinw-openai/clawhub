@@ -54,6 +54,26 @@ export const CliPublishFileSchema = type({
     sha256: "string",
     contentType: "string?",
 });
+export const AGENT_MANIFEST_FILENAME = "openclaw.agent.json";
+export const AGENT_REQUIRED_MARKDOWN_FILES = [
+    "AGENTS.md",
+    "SOUL.md",
+    "IDENTITY.md",
+    "TOOLS.md",
+    "USER.md",
+];
+export const AGENT_ALLOWED_FILES = [
+    ...AGENT_REQUIRED_MARKDOWN_FILES,
+    AGENT_MANIFEST_FILENAME,
+];
+export const OpenClawAgentManifestSchema = type({
+    schemaVersion: "1",
+    slug: "string",
+    displayName: "string",
+    summary: "string",
+    suggestedAgentId: "string",
+    skillDependencies: "string[]?",
+});
 export const PublishSourceSchema = type({
     kind: '"github"',
     url: "string",
@@ -75,6 +95,14 @@ export const CliPublishRequestSchema = type({
         slug: "string",
         version: "string?",
     }).optional(),
+    files: CliPublishFileSchema.array(),
+});
+export const CliAgentPublishRequestSchema = type({
+    slug: "string",
+    displayName: "string",
+    summary: "string",
+    suggestedAgentId: "string",
+    skillDependencies: "string[]?",
     files: CliPublishFileSchema.array(),
 });
 export const ApiCliPublishResponseSchema = type({
@@ -244,6 +272,55 @@ export const ApiV1PublishResponseSchema = type({
 });
 export const ApiV1DeleteResponseSchema = type({
     ok: "true",
+});
+export const ApiV1AgentPublishResponseSchema = type({
+    ok: "true",
+    agentId: "string",
+});
+export const ApiV1AgentListResponseSchema = type({
+    items: type({
+        slug: "string",
+        displayName: "string",
+        summary: "string",
+        suggestedAgentId: "string",
+        skillDependencies: "string[]?",
+        stats: type({
+            installs: "number",
+        }),
+        createdAt: "number",
+        updatedAt: "number",
+        owner: type({
+            handle: "string|null",
+            displayName: "string|null?",
+            image: "string|null?",
+        }).or("null"),
+    }).array(),
+    nextCursor: "string|null",
+});
+export const ApiV1AgentResponseSchema = type({
+    agent: type({
+        slug: "string",
+        displayName: "string",
+        summary: "string",
+        suggestedAgentId: "string",
+        skillDependencies: "string[]?",
+        files: type({
+            path: "string",
+            size: "number",
+            sha256: "string",
+            contentType: "string|null?",
+        }).array(),
+        stats: type({
+            installs: "number",
+        }),
+        createdAt: "number",
+        updatedAt: "number",
+    }).or("null"),
+    owner: type({
+        handle: "string|null",
+        displayName: "string|null?",
+        image: "string|null?",
+    }).or("null"),
 });
 export const ApiV1SkillRenameResponseSchema = type({
     ok: "true",

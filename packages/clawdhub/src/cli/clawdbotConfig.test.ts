@@ -4,7 +4,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { resolveHome } from "../homedir.js";
-import { resolveClawdbotDefaultWorkspace, resolveClawdbotSkillRoots } from "./clawdbotConfig.js";
+import {
+  resolveClawdbotDefaultWorkspace,
+  resolveClawdbotSkillRoots,
+  resolveOpenclawAgent,
+} from "./clawdbotConfig.js";
 
 const originalEnv = { ...process.env };
 
@@ -234,5 +238,45 @@ describe("resolveClawdbotSkillRoots", () => {
     );
     expect(labels[resolve(stateDir, "skills")]).toBe("OpenClaw: Shared skills");
     expect(labels[resolve(workspace, "skills")]).toBe("OpenClaw: Agent: main");
+  });
+
+  it("resolves OpenClaw agents from list and routing entries", async () => {
+    const base = await mkdtemp(join(tmpdir(), "clawhub-openclaw-agent-"));
+    const stateDir = join(base, "openclaw-state");
+    const configPath = join(stateDir, "openclaw.json");
+    const listedWorkspace = join(base, "workspace-listed");
+    const routedWorkspace = join(base, "workspace-routed");
+
+    process.env.OPENCLAW_STATE_DIR = stateDir;
+    await mkdir(stateDir, { recursive: true });
+    await writeFile(
+      configPath,
+      `{
+        agents: {
+          list: [
+            { id: "main", name: "Main Agent", workspace: "${listedWorkspace}" },
+          ],
+        },
+        routing: {
+          agents: {
+            helper: { name: "Helper Bot", workspace: "${routedWorkspace}" },
+          },
+        },
+      }`,
+      "utf8",
+    );
+
+    await expect(resolveOpenclawAgent("main")).resolves.toEqual({
+      id: "main",
+      name: "Main Agent",
+      workspace: resolve(listedWorkspace),
+      default: undefined,
+    });
+    await expect(resolveOpenclawAgent("helper")).resolves.toEqual({
+      id: "helper",
+      name: "Helper Bot",
+      workspace: resolve(routedWorkspace),
+      default: false,
+    });
   });
 });

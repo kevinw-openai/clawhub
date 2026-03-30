@@ -1,5 +1,10 @@
 import { httpAction } from "./functions";
 import {
+  agentsGetRouterV1Handler,
+  listAgentsV1Handler,
+  publishAgentV1Handler,
+} from "./httpApiV1/agentsV1";
+import {
   listBundlePluginsV1Handler,
   listCodePluginsV1Handler,
   listPackagesV1Handler,
@@ -31,6 +36,9 @@ import { whoamiV1Handler } from "./httpApiV1/whoamiV1";
 
 export const listPackagesV1Http = httpAction(listPackagesV1Handler);
 export const listPluginsV1Http = httpAction(listPluginsV1Handler);
+export const listAgentsV1Http = httpAction(listAgentsV1Handler);
+export const agentsGetRouterV1Http = httpAction(agentsGetRouterV1Handler);
+export const publishAgentV1Http = httpAction(publishAgentV1Handler);
 export const packagesGetRouterV1Http = httpAction(packagesGetRouterV1Handler);
 export const pluginsGetRouterV1Http = httpAction(pluginsGetRouterV1Handler);
 export const publishPackageV1Http = httpAction(publishPackageV1Handler);
@@ -62,6 +70,9 @@ export const usersListV1Http = httpAction(usersListV1Handler);
 export const __handlers = {
   listPackagesV1Handler,
   listPluginsV1Handler,
+  listAgentsV1Handler,
+  agentsGetRouterV1Handler,
+  publishAgentV1Handler,
   packagesGetRouterV1Handler,
   pluginsGetRouterV1Handler,
   publishPackageV1Handler,
