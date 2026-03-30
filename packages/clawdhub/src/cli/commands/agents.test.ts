@@ -368,4 +368,59 @@ describe("agent commands", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it("treats missing structured identity data as a non-fatal install warning", async () => {
+    const root = await makeTempRoot("clawhub-agent-install-identity-warning-");
+    const stateDir = join(root, ".openclaw");
+    const consoleLog = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    try {
+      mockResolveOpenclawStateDir.mockReturnValue(stateDir);
+      mockApiRequest.mockResolvedValue({
+        agent: {
+          slug: "demo-agent",
+          displayName: "Demo Agent",
+          summary: "Helpful Agent",
+          suggestedAgentId: "demo-agent",
+          skillDependencies: [],
+          files: AGENT_REQUIRED_MARKDOWN_FILES.map((path) => ({
+            path,
+            size: 10,
+            sha256: "a".repeat(64),
+            contentType: "text/markdown",
+          })),
+          stats: { installs: 0 },
+          createdAt: 1,
+          updatedAt: 1,
+        },
+        owner: null,
+      });
+      mockFetchText.mockImplementation(async (_registry: string, args: { url: string }) => {
+        const url = new URL(args.url);
+        return `# ${url.searchParams.get("path")}\n`;
+      });
+      mockSpawnSync.mockImplementation((_command: string, args: string[]) => {
+        if (args[0] === "agents" && args[1] === "list") {
+          return { status: 0, stdout: "[]" };
+        }
+        if (args[0] === "agents" && args[1] === "add") {
+          return { status: 0, stdout: '{"ok":true}' };
+        }
+        if (args[0] === "agents" && args[1] === "set-identity") {
+          return {
+            status: 1,
+            stderr:
+              "No identity data found in ~/.openclaw/workspace-demo-agent/IDENTITY.md.",
+          };
+        }
+        return { status: 1, stderr: "unexpected" };
+      });
+
+      await expect(cmdAgentInstall(makeOpts(root), "demo-agent")).resolves.toBeUndefined();
+      expect(consoleLog).toHaveBeenCalledWith(expect.stringMatching(/skipped OpenClaw identity sync/i));
+    } finally {
+      consoleLog.mockRestore();
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });

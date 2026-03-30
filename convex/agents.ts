@@ -6,6 +6,7 @@ import {
   parseArk,
 } from "clawhub-schema";
 import { ConvexError, v } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import { action, internalMutation, internalQuery, query } from "./functions";
@@ -188,7 +189,7 @@ export async function publishAgentForUser(
     skillDependencies,
   });
 
-  const existing = (await ctx.runQuery(getAgentBySlugInternal, {
+  const existing = (await ctx.runQuery(internal.agents.getAgentBySlugInternal, {
     slug,
   })) as Doc<"agents"> | null;
   const now = Date.now();
@@ -198,7 +199,7 @@ export async function publishAgentForUser(
   }
 
   if (existing) {
-    await ctx.runMutation(upsertAgentInternal, {
+    await ctx.runMutation(internal.agents.upsertAgentInternal, {
       existingAgentId: existing._id,
       userId,
       slug,
@@ -213,7 +214,7 @@ export async function publishAgentForUser(
     return { agentId: existing._id };
   }
 
-  const agentId = (await ctx.runMutation(upsertAgentInternal, {
+  const agentId = (await ctx.runMutation(internal.agents.upsertAgentInternal, {
     userId,
     slug,
     displayName,
@@ -227,7 +228,7 @@ export async function publishAgentForUser(
   return { agentId };
 }
 
-const upsertAgentInternal = internalMutation({
+export const upsertAgentInternal = internalMutation({
   args: {
     existingAgentId: v.optional(v.id("agents")),
     userId: v.id("users"),
@@ -378,7 +379,7 @@ export const getBySlug = query({
 export const getFileText = action({
   args: { agentId: v.id("agents"), path: v.string() },
   handler: async (ctx, args) => {
-    const agent = (await ctx.runQuery(getAgentByIdInternal, {
+    const agent = (await ctx.runQuery(internal.agents.getAgentByIdInternal, {
       agentId: args.agentId,
     })) as Doc<"agents"> | null;
     if (!agent || agent.softDeletedAt) throw new ConvexError("Agent not found");

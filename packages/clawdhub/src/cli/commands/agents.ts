@@ -171,6 +171,11 @@ function listInstalledOpenClawAgentIds() {
   );
 }
 
+function isOptionalIdentitySyncError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /no identity data found/i.test(message) && /identity\.md/i.test(message);
+}
+
 export async function cmdAgentExport(
   _opts: GlobalOpts,
   rawAgentId: string,
@@ -340,18 +345,29 @@ export async function cmdAgentInstall(
       "--non-interactive",
       "--json",
     ]);
-    runOpenClaw([
-      "agents",
-      "set-identity",
-      "--agent",
-      agentId,
-      "--workspace",
-      workspaceDir,
-      "--from-identity",
-      "--json",
-    ]);
+    let skippedIdentitySync = false;
+    try {
+      runOpenClaw([
+        "agents",
+        "set-identity",
+        "--agent",
+        agentId,
+        "--workspace",
+        workspaceDir,
+        "--from-identity",
+        "--json",
+      ]);
+    } catch (error) {
+      if (!isOptionalIdentitySyncError(error)) throw error;
+      skippedIdentitySync = true;
+    }
 
     spinner.succeed(`Installed ${slug} as OpenClaw agent "${agentId}"`);
+    if (skippedIdentitySync) {
+      console.log(
+        `Note: skipped OpenClaw identity sync because ${join("~", ".openclaw", `workspace-${agentId}`, "IDENTITY.md")} does not contain structured identity fields yet.`,
+      );
+    }
   } catch (error) {
     spinner.fail(formatError(error));
     throw error;
@@ -366,4 +382,5 @@ export const __test = {
   normalizeAgentSlugOrFail,
   parseJsonFromCommand,
   readAgentBundle,
+  isOptionalIdentitySyncError,
 };
