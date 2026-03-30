@@ -21,12 +21,11 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as SoulsIndexRouteImport } from './routes/souls/index'
 import { Route as SkillsIndexRouteImport } from './routes/skills/index'
 import { Route as PluginsIndexRouteImport } from './routes/plugins/index'
 import { Route as PackagesIndexRouteImport } from './routes/packages/index'
-import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
+import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as UHandleRouteImport } from './routes/u/$handle'
 import { Route as SoulsSlugRouteImport } from './routes/souls/$slug'
 import { Route as PluginsNewRouteImport } from './routes/plugins/new'
@@ -35,6 +34,7 @@ import { Route as PackagesNewRouteImport } from './routes/packages/new'
 import { Route as PackagesNameRouteImport } from './routes/packages/$name'
 import { Route as OrgsHandleRouteImport } from './routes/orgs/$handle'
 import { Route as CliAuthRouteImport } from './routes/cli/auth'
+import { Route as AgentsSlugRouteImport } from './routes/agents/$slug'
 import { Route as OwnerSlugRouteImport } from './routes/$owner/$slug'
 
 const UploadRoute = UploadRouteImport.update({
@@ -97,11 +97,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AgentsIndexRoute = AgentsIndexRouteImport.update({
-  id: '/agents/',
-  path: '/agents/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SoulsIndexRoute = SoulsIndexRouteImport.update({
   id: '/souls/',
   path: '/souls/',
@@ -122,14 +117,14 @@ const PackagesIndexRoute = PackagesIndexRouteImport.update({
   path: '/packages/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentsIndexRoute = AgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UHandleRoute = UHandleRouteImport.update({
   id: '/u/$handle',
   path: '/u/$handle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentsSlugRoute = AgentsSlugRouteImport.update({
-  id: '/agents/$slug',
-  path: '/agents/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SoulsSlugRoute = SoulsSlugRouteImport.update({
@@ -167,6 +162,11 @@ const CliAuthRoute = CliAuthRouteImport.update({
   path: '/cli/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentsSlugRoute = AgentsSlugRouteImport.update({
+  id: '/agents/$slug',
+  path: '/agents/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OwnerSlugRoute = OwnerSlugRouteImport.update({
   id: '/$owner/$slug',
   path: '/$owner/$slug',
@@ -175,7 +175,6 @@ const OwnerSlugRoute = OwnerSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/agents/$slug': typeof AgentsSlugRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
@@ -188,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/stars': typeof StarsRoute
   '/upload': typeof UploadRoute
   '/$owner/$slug': typeof OwnerSlugRoute
+  '/agents/$slug': typeof AgentsSlugRoute
   '/cli/auth': typeof CliAuthRoute
   '/orgs/$handle': typeof OrgsHandleRoute
   '/packages/$name': typeof PackagesNameRoute
@@ -204,7 +204,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/agents/$slug': typeof AgentsSlugRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
@@ -217,6 +216,7 @@ export interface FileRoutesByTo {
   '/stars': typeof StarsRoute
   '/upload': typeof UploadRoute
   '/$owner/$slug': typeof OwnerSlugRoute
+  '/agents/$slug': typeof AgentsSlugRoute
   '/cli/auth': typeof CliAuthRoute
   '/orgs/$handle': typeof OrgsHandleRoute
   '/packages/$name': typeof PackagesNameRoute
@@ -234,7 +234,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/agents/$slug': typeof AgentsSlugRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
@@ -247,6 +246,7 @@ export interface FileRoutesById {
   '/stars': typeof StarsRoute
   '/upload': typeof UploadRoute
   '/$owner/$slug': typeof OwnerSlugRoute
+  '/agents/$slug': typeof AgentsSlugRoute
   '/cli/auth': typeof CliAuthRoute
   '/orgs/$handle': typeof OrgsHandleRoute
   '/packages/$name': typeof PackagesNameRoute
@@ -265,7 +265,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/agents/$slug'
     | '/about'
     | '/admin'
     | '/dashboard'
@@ -278,6 +277,7 @@ export interface FileRouteTypes {
     | '/stars'
     | '/upload'
     | '/$owner/$slug'
+    | '/agents/$slug'
     | '/cli/auth'
     | '/orgs/$handle'
     | '/packages/$name'
@@ -294,7 +294,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/agents/$slug'
     | '/about'
     | '/admin'
     | '/dashboard'
@@ -307,6 +306,7 @@ export interface FileRouteTypes {
     | '/stars'
     | '/upload'
     | '/$owner/$slug'
+    | '/agents/$slug'
     | '/cli/auth'
     | '/orgs/$handle'
     | '/packages/$name'
@@ -323,7 +323,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/agents/$slug'
     | '/about'
     | '/admin'
     | '/dashboard'
@@ -336,6 +335,7 @@ export interface FileRouteTypes {
     | '/stars'
     | '/upload'
     | '/$owner/$slug'
+    | '/agents/$slug'
     | '/cli/auth'
     | '/orgs/$handle'
     | '/packages/$name'
@@ -353,7 +353,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AgentsSlugRoute: typeof AgentsSlugRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRoute
@@ -366,6 +365,7 @@ export interface RootRouteChildren {
   StarsRoute: typeof StarsRoute
   UploadRoute: typeof UploadRoute
   OwnerSlugRoute: typeof OwnerSlugRoute
+  AgentsSlugRoute: typeof AgentsSlugRoute
   CliAuthRoute: typeof CliAuthRoute
   OrgsHandleRoute: typeof OrgsHandleRoute
   PackagesNameRoute: typeof PackagesNameRoute
@@ -467,13 +467,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/agents/': {
-      id: '/agents/'
-      path: '/agents'
-      fullPath: '/agents/'
-      preLoaderRoute: typeof AgentsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/souls/': {
       id: '/souls/'
       path: '/souls'
@@ -502,18 +495,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PackagesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/': {
+      id: '/agents/'
+      path: '/agents'
+      fullPath: '/agents/'
+      preLoaderRoute: typeof AgentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/u/$handle': {
       id: '/u/$handle'
       path: '/u/$handle'
       fullPath: '/u/$handle'
       preLoaderRoute: typeof UHandleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agents/$slug': {
-      id: '/agents/$slug'
-      path: '/agents/$slug'
-      fullPath: '/agents/$slug'
-      preLoaderRoute: typeof AgentsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/souls/$slug': {
@@ -565,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CliAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agents/$slug': {
+      id: '/agents/$slug'
+      path: '/agents/$slug'
+      fullPath: '/agents/$slug'
+      preLoaderRoute: typeof AgentsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$owner/$slug': {
       id: '/$owner/$slug'
       path: '/$owner/$slug'
@@ -577,7 +577,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AgentsSlugRoute: AgentsSlugRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
   DashboardRoute: DashboardRoute,
@@ -590,6 +589,7 @@ const rootRouteChildren: RootRouteChildren = {
   StarsRoute: StarsRoute,
   UploadRoute: UploadRoute,
   OwnerSlugRoute: OwnerSlugRoute,
+  AgentsSlugRoute: AgentsSlugRoute,
   CliAuthRoute: CliAuthRoute,
   OrgsHandleRoute: OrgsHandleRoute,
   PackagesNameRoute: PackagesNameRoute,

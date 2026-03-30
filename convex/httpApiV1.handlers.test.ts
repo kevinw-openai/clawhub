@@ -111,32 +111,27 @@ describe("httpApiV1 handlers", () => {
   it("lists public agents", async () => {
     const response = await __handlers.listAgentsV1Handler(
       makeCtx({
-        runQuery: vi.fn(async (query: unknown) => {
-          if (query === api.agents.listPublicPage) {
-            return {
-              items: [
-                {
-                  agent: {
-                    slug: "demo-agent",
-                    displayName: "Demo Agent",
-                    summary: "Helpful agent",
-                    suggestedAgentId: "demo-agent",
-                    skillDependencies: ["alpha-skill"],
-                    stats: { installs: 3 },
-                    createdAt: 1,
-                    updatedAt: 2,
-                  },
-                  owner: {
-                    handle: "alice",
-                    displayName: "Alice",
-                    image: null,
-                  },
-                },
-              ],
-              nextCursor: null,
-            };
-          }
-          return null;
+        runQuery: vi.fn().mockResolvedValue({
+          items: [
+            {
+              agent: {
+                slug: "demo-agent",
+                displayName: "Demo Agent",
+                summary: "Helpful agent",
+                suggestedAgentId: "demo-agent",
+                skillDependencies: ["alpha-skill"],
+                stats: { installs: 3 },
+                createdAt: 1,
+                updatedAt: 2,
+              },
+              owner: {
+                handle: "alice",
+                displayName: "Alice",
+                image: null,
+              },
+            },
+          ],
+          nextCursor: null,
         }),
       }),
       new Request("https://example.com/api/v1/agents"),
@@ -167,9 +162,10 @@ describe("httpApiV1 handlers", () => {
 
   it("returns agent detail and file contents", async () => {
     const storageGet = vi.fn(async () => new Blob(["# Agent\n"], { type: "text/markdown" }));
-    const runQuery = vi.fn(async (query: unknown) => {
-      if (query === api.agents.getBySlug) {
-        return {
+
+    const detailResponse = await __handlers.agentsGetRouterV1Handler(
+      makeCtx({
+        runQuery: vi.fn().mockResolvedValue({
           agent: {
             _id: "agents:1",
             slug: "demo-agent",
@@ -190,27 +186,9 @@ describe("httpApiV1 handlers", () => {
             updatedAt: 2,
           },
           owner: { handle: "alice", displayName: "Alice", image: null },
-        };
-      }
-      if (query === internal.agents.getAgentBySlugInternal) {
-        return {
-          _id: "agents:1",
-          files: [
-            {
-              path: "AGENTS.md",
-              size: 8,
-              sha256: "a".repeat(64),
-              storageId: "storage:agents" as Id<"_storage">,
-              contentType: "text/markdown",
-            },
-          ],
-        };
-      }
-      return null;
-    });
-
-    const detailResponse = await __handlers.agentsGetRouterV1Handler(
-      makeCtx({ runQuery, storage: { get: storageGet } }),
+        }),
+        storage: { get: storageGet },
+      }),
       new Request("https://example.com/api/v1/agents/demo-agent"),
     );
     if (detailResponse.status !== 200) throw new Error(await detailResponse.text());
@@ -241,7 +219,21 @@ describe("httpApiV1 handlers", () => {
     });
 
     const fileResponse = await __handlers.agentsGetRouterV1Handler(
-      makeCtx({ runQuery, storage: { get: storageGet } }),
+      makeCtx({
+        runQuery: vi.fn().mockResolvedValue({
+          _id: "agents:1",
+          files: [
+            {
+              path: "AGENTS.md",
+              size: 8,
+              sha256: "a".repeat(64),
+              storageId: "storage:agents" as Id<"_storage">,
+              contentType: "text/markdown",
+            },
+          ],
+        }),
+        storage: { get: storageGet },
+      }),
       new Request("https://example.com/api/v1/agents/demo-agent/file?path=AGENTS.md"),
     );
     expect(fileResponse.status).toBe(200);

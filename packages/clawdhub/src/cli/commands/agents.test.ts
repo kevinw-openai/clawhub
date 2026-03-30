@@ -13,9 +13,9 @@ vi.mock("../authToken.js", () => ({
   getOptionalAuthToken: () => mockGetOptionalAuthToken(),
 }));
 
-const mockGetRegistry = vi.fn(async () => "https://clawhub.ai");
+const mockGetRegistry = vi.fn(async (..._args: unknown[]) => "https://clawhub.ai");
 vi.mock("../registry.js", () => ({
-  getRegistry: (opts: unknown, params?: unknown) => mockGetRegistry(opts, params),
+  getRegistry: (...args: unknown[]) => mockGetRegistry(...args),
 }));
 
 const mockApiRequest = vi.fn();
