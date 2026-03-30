@@ -43,6 +43,8 @@ export function AgentsIndex() {
   const view = search.view ?? "list";
   const [query, setQuery] = useState(search.q ?? "");
   const items = useQuery(api.agents.list, { limit: 500 }) as AgentListEntry[] | undefined;
+  const totalAgentsText =
+    typeof items?.length === "number" ? items.length.toLocaleString("en-US") : null;
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -79,15 +81,17 @@ export function AgentsIndex() {
 
   return (
     <main className="section">
-      <header className="skills-header">
-        <div>
-          <h1 className="section-title" style={{ marginBottom: 8 }}>
-            Agents
-          </h1>
-          <p className="section-subtitle" style={{ marginBottom: 0 }}>
-            {items === undefined ? "Loading agents…" : `${sorted.length} agents.`}
-          </p>
-        </div>
+      <header className="skills-header-top">
+        <h1 className="section-title" style={{ marginBottom: 8 }}>
+          Agents
+          {totalAgentsText && <span style={{ opacity: 0.55 }}>{` (${totalAgentsText})`}</span>}
+        </h1>
+        <p className="section-subtitle" style={{ marginBottom: 0 }}>
+          {items === undefined ? "Loading agents…" : "Browse the agent library."}
+        </p>
+      </header>
+
+      <div className="skills-container">
         <div className="skills-toolbar">
           <div className="skills-search">
             <input
@@ -160,54 +164,54 @@ export function AgentsIndex() {
             </button>
           </div>
         </div>
-      </header>
 
-      {items === undefined ? (
-        <div className="card">
-          <div className="loading-indicator">Loading agents…</div>
-        </div>
-      ) : sorted.length === 0 ? (
-        <div className="card">No agents match that filter.</div>
-      ) : view === "cards" ? (
-        <div className="grid">
-          {sorted.map((entry) => (
-            <AgentCard
-              key={entry.agent._id}
-              agent={entry.agent}
-              owner={entry.owner}
-              meta={
-                <div className="stat">
-                  {entry.agent.stats.installs} installs
-                  {entry.owner?.handle ? ` · @${entry.owner.handle}` : ""}
+        {items === undefined ? (
+          <div className="card">
+            <div className="loading-indicator">Loading agents…</div>
+          </div>
+        ) : sorted.length === 0 ? (
+          <div className="card">No agents match that filter.</div>
+        ) : view === "cards" ? (
+          <div className="grid">
+            {sorted.map((entry) => (
+              <AgentCard
+                key={entry.agent._id}
+                agent={entry.agent}
+                owner={entry.owner}
+                meta={
+                  <div className="stat">
+                    {entry.agent.stats.installs} installs
+                    {entry.owner?.handle ? ` · @${entry.owner.handle}` : ""}
+                  </div>
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="skills-list">
+            {sorted.map((entry) => (
+              <Link
+                key={entry.agent._id}
+                className="skills-row"
+                to="/agents/$slug"
+                params={{ slug: entry.agent.slug }}
+              >
+                <div className="skills-row-main">
+                  <div className="skills-row-title">
+                    <span>{entry.agent.displayName}</span>
+                    <span className="skills-row-slug">/{entry.agent.slug}</span>
+                  </div>
+                  <div className="skills-row-summary">{entry.agent.summary}</div>
                 </div>
-              }
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="skills-list">
-          {sorted.map((entry) => (
-            <Link
-              key={entry.agent._id}
-              className="skills-row"
-              to="/agents/$slug"
-              params={{ slug: entry.agent.slug }}
-            >
-              <div className="skills-row-main">
-                <div className="skills-row-title">
-                  <span>{entry.agent.displayName}</span>
-                  <span className="skills-row-slug">/{entry.agent.slug}</span>
+                <div className="skills-row-metrics">
+                  <span className="stat">{entry.agent.stats.installs} installs</span>
+                  {entry.owner?.handle ? <span className="stat">@{entry.owner.handle}</span> : null}
                 </div>
-                <div className="skills-row-summary">{entry.agent.summary}</div>
-              </div>
-              <div className="skills-row-metrics">
-                <span className="stat">{entry.agent.stats.installs} installs</span>
-                {entry.owner?.handle ? <span className="stat">@{entry.owner.handle}</span> : null}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
