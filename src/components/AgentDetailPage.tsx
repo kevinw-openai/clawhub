@@ -1,5 +1,6 @@
 import { AGENT_MANIFEST_FILENAME } from "clawhub-schema";
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
+import { useEffect, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import type { PublicAgent, PublicUser } from "../lib/publicUser";
 import { AgentFilesPanel } from "./AgentFilesPanel";
@@ -15,6 +16,14 @@ type AgentBySlugResult = {
 
 export function AgentDetailPage({ slug }: AgentDetailPageProps) {
   const result = useQuery(api.agents.getBySlug, { slug }) as AgentBySlugResult | undefined;
+  const ensureAgentSeeds = useAction(api.seed.ensureAgentSeeds);
+  const seedEnsuredRef = useRef(false);
+
+  useEffect(() => {
+    if (seedEnsuredRef.current) return;
+    seedEnsuredRef.current = true;
+    void ensureAgentSeeds({});
+  }, [ensureAgentSeeds]);
 
   if (result === undefined) {
     return (

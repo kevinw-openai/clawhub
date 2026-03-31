@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import { AgentCard } from "../../components/AgentCard";
 import type { PublicAgent, PublicUser } from "../../lib/publicUser";
@@ -43,8 +43,16 @@ export function AgentsIndex() {
   const view = search.view ?? "list";
   const [query, setQuery] = useState(search.q ?? "");
   const items = useQuery(api.agents.list, { limit: 500 }) as AgentListEntry[] | undefined;
+  const ensureAgentSeeds = useAction(api.seed.ensureAgentSeeds);
+  const seedEnsuredRef = useRef(false);
   const totalAgentsText =
     typeof items?.length === "number" ? items.length.toLocaleString("en-US") : null;
+
+  useEffect(() => {
+    if (seedEnsuredRef.current) return;
+    seedEnsuredRef.current = true;
+    void ensureAgentSeeds({});
+  }, [ensureAgentSeeds]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();

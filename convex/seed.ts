@@ -1,8 +1,16 @@
+import { AGENT_MANIFEST_FILENAME, type OpenClawAgentManifest } from "clawhub-schema";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ActionCtx, DatabaseReader, DatabaseWriter } from "./_generated/server";
+import { publishAgentForUser } from "./agents";
 import { action, internalMutation, internalQuery } from "./functions";
+import {
+  AGENT_SEED_DISPLAY_NAME,
+  AGENT_SEED_HANDLE,
+  AGENT_SEED_KEY,
+  AGENT_SEEDS,
+} from "./seedAgents";
 import { publishSoulVersionForUser } from "./lib/soulPublish";
 import { SOUL_SEED_DISPLAY_NAME, SOUL_SEED_HANDLE, SOUL_SEED_KEY, SOUL_SEEDS } from "./seedSouls";
 
@@ -15,19 +23,26 @@ type SeedStartDecision = {
   reason: "done" | "running" | "patched" | "inserted";
 };
 
-async function getSeedState(ctx: { db: DatabaseReader }): Promise<SeedStateDoc | null> {
+async function getSeedStateByKey(
+  ctx: { db: DatabaseReader },
+  key: string,
+): Promise<SeedStateDoc | null> {
   const entries = (await ctx.db
     .query("githubBackupSyncState")
-    .withIndex("by_key", (q) => q.eq("key", SOUL_SEED_KEY))
+    .withIndex("by_key", (q) => q.eq("key", key))
     .order("desc")
     .take(2)) as SeedStateDoc[];
   return entries[0] ?? null;
 }
 
-async function cleanupSeedState(ctx: { db: DatabaseWriter }, keepId: Id<"githubBackupSyncState">) {
+async function cleanupSeedStateByKey(
+  ctx: { db: DatabaseWriter },
+  key: string,
+  keepId: Id<"githubBackupSyncState">,
+) {
   const entries = (await ctx.db
     .query("githubBackupSyncState")
-    .withIndex("by_key", (q) => q.eq("key", SOUL_SEED_KEY))
+    .withIndex("by_key", (q) => q.eq("key", key))
     .order("desc")
     .take(50)) as SeedStateDoc[];
 
@@ -48,17 +63,17 @@ export function decideSeedStart(existing: SeedStateDoc | null, now: number): See
 
 export const getSoulSeedStateInternal = internalQuery({
   args: {},
-  handler: async (ctx) => getSeedState(ctx),
+  handler: async (ctx) => getSeedStateByKey(ctx, SOUL_SEED_KEY),
 });
 
 export const setSoulSeedStateInternal = internalMutation({
   args: { status: v.string() },
   handler: async (ctx, args) => {
-    const existing = await getSeedState(ctx);
+    const existing = await getSeedStateByKey(ctx, SOUL_SEED_KEY);
     const now = Date.now();
     if (existing) {
       await ctx.db.patch(existing._id, { cursor: args.status, updatedAt: now });
-      await cleanupSeedState(ctx, existing._id);
+      await cleanupSeedStateByKey(ctx, SOUL_SEED_KEY, existing._id);
       return existing._id;
     }
     const id = await ctx.db.insert("githubBackupSyncState", {
@@ -66,7 +81,7 @@ export const setSoulSeedStateInternal = internalMutation({
       cursor: args.status,
       updatedAt: now,
     });
-    await cleanupSeedState(ctx, id);
+    await cleanupSeedStateByKey(ctx, SOUL_SEED_KEY, id);
     return id;
   },
 });
@@ -75,14 +90,14 @@ export const tryStartSoulSeedInternal = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    const existing = await getSeedState(ctx);
+    const existing = await getSeedStateByKey(ctx, SOUL_SEED_KEY);
     const decision = decideSeedStart(existing, now);
 
     if (!decision.started) return decision;
 
     if (existing) {
       await ctx.db.patch(existing._id, { cursor: "running", updatedAt: now });
-      await cleanupSeedState(ctx, existing._id);
+      await cleanupSeedStateByKey(ctx, SOUL_SEED_KEY, existing._id);
       return { started: true, reason: "patched" as const };
     }
 
@@ -91,7 +106,7 @@ export const tryStartSoulSeedInternal = internalMutation({
       cursor: "running",
       updatedAt: now,
     });
-    await cleanupSeedState(ctx, id);
+    await cleanupSeedStateByKey(ctx, SOUL_SEED_KEY, id);
     return { started: true, reason: "inserted" as const };
   },
 });
@@ -100,6 +115,64 @@ export const hasAnySoulsInternal = internalQuery({
   args: {},
   handler: async (ctx) => {
     const entry = await ctx.db.query("souls").take(1);
+    return entry.length > 0;
+  },
+});
+
+export const getAgentSeedStateInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => getSeedStateByKey(ctx, AGENT_SEED_KEY),
+});
+
+export const setAgentSeedStateInternal = internalMutation({
+  args: { status: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await getSeedStateByKey(ctx, AGENT_SEED_KEY);
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, { cursor: args.status, updatedAt: now });
+      await cleanupSeedStateByKey(ctx, AGENT_SEED_KEY, existing._id);
+      return existing._id;
+    }
+    const id = await ctx.db.insert("githubBackupSyncState", {
+      key: AGENT_SEED_KEY,
+      cursor: args.status,
+      updatedAt: now,
+    });
+    await cleanupSeedStateByKey(ctx, AGENT_SEED_KEY, id);
+    return id;
+  },
+});
+
+export const tryStartAgentSeedInternal = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const existing = await getSeedStateByKey(ctx, AGENT_SEED_KEY);
+    const decision = decideSeedStart(existing, now);
+
+    if (!decision.started) return decision;
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { cursor: "running", updatedAt: now });
+      await cleanupSeedStateByKey(ctx, AGENT_SEED_KEY, existing._id);
+      return { started: true, reason: "patched" as const };
+    }
+
+    const id = await ctx.db.insert("githubBackupSyncState", {
+      key: AGENT_SEED_KEY,
+      cursor: "running",
+      updatedAt: now,
+    });
+    await cleanupSeedStateByKey(ctx, AGENT_SEED_KEY, id);
+    return { started: true, reason: "inserted" as const };
+  },
+});
+
+export const hasAnyAgentsInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const entry = await ctx.db.query("agents").take(1);
     return entry.length > 0;
   },
 });
@@ -133,9 +206,43 @@ export const ensureSoulSeeds = action({
   },
 });
 
+export const ensureAgentSeeds = action({
+  args: {},
+  handler: async (ctx) => {
+    const started = (await ctx.runMutation(internal.seed.tryStartAgentSeedInternal, {})) as {
+      started: boolean;
+      reason: "done" | "running" | "patched" | "inserted";
+    };
+    if (!started.started) {
+      if (started.reason === "done") return { seeded: false, reason: "already-seeded" as const };
+      return { seeded: false, reason: "in-progress" as const };
+    }
+
+    const hasAgents = (await ctx.runQuery(internal.seed.hasAnyAgentsInternal, {})) as boolean;
+    if (hasAgents) {
+      await ctx.runMutation(internal.seed.setAgentSeedStateInternal, { status: "done" });
+      return { seeded: false, reason: "agents-exist" as const };
+    }
+
+    try {
+      const result = await runAgentSeed(ctx);
+      await ctx.runMutation(internal.seed.setAgentSeedStateInternal, { status: "done" });
+      return { seeded: true, reason: "seeded" as const, ...result };
+    } catch (error) {
+      await ctx.runMutation(internal.seed.setAgentSeedStateInternal, { status: "error" });
+      throw error;
+    }
+  },
+});
+
 export const seed = action({
   args: {},
   handler: async (ctx) => runSeed(ctx),
+});
+
+export const seedAgents = action({
+  args: {},
+  handler: async (ctx) => runAgentSeed(ctx),
 });
 
 async function runSeed(ctx: ActionCtx) {
@@ -200,6 +307,65 @@ async function runSeed(ctx: ActionCtx) {
   return { created, skipped };
 }
 
+async function runAgentSeed(ctx: ActionCtx) {
+  const userId = (await ctx.runMutation(internal.seed.ensureSeedUserInternal, {
+    handle: AGENT_SEED_HANDLE,
+    displayName: AGENT_SEED_DISPLAY_NAME,
+  })) as Id<"users">;
+  await ctx.runMutation(internal.users.setGitHubCreatedAtInternal, {
+    userId,
+    githubCreatedAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
+  });
+
+  const created: string[] = [];
+  const skipped: string[] = [];
+
+  for (const seedEntry of AGENT_SEEDS) {
+    const existing = (await ctx.runQuery(internal.agents.getAgentBySlugInternal, {
+      slug: seedEntry.slug,
+    })) as Doc<"agents"> | null;
+    if (existing && existing.ownerUserId !== userId) {
+      skipped.push(seedEntry.slug);
+      continue;
+    }
+
+    const manifest: OpenClawAgentManifest = {
+      schemaVersion: 1,
+      slug: seedEntry.slug,
+      displayName: seedEntry.displayName,
+      summary: seedEntry.summary,
+      suggestedAgentId: seedEntry.suggestedAgentId,
+      ...(seedEntry.skillDependencies?.length
+        ? { skillDependencies: [...seedEntry.skillDependencies] }
+        : {}),
+    };
+
+    const files = await Promise.all([
+      ...Object.entries(seedEntry.files).map(([path, text]) =>
+        storeTextFile(ctx, path, text, "text/markdown"),
+      ),
+      storeTextFile(
+        ctx,
+        AGENT_MANIFEST_FILENAME,
+        `${JSON.stringify(manifest, null, 2)}\n`,
+        "application/json",
+      ),
+    ]);
+
+    await publishAgentForUser(ctx, userId, {
+      slug: seedEntry.slug,
+      displayName: seedEntry.displayName,
+      summary: seedEntry.summary,
+      suggestedAgentId: seedEntry.suggestedAgentId,
+      skillDependencies: seedEntry.skillDependencies,
+      files,
+    });
+    created.push(seedEntry.slug);
+  }
+
+  return { created, skipped };
+}
+
 function isExpectedSeedSkipError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return (
@@ -245,6 +411,24 @@ async function sha256Hex(bytes: Uint8Array) {
   const data = new Uint8Array(bytes);
   const digest = await crypto.subtle.digest("SHA-256", data);
   return toHex(new Uint8Array(digest));
+}
+
+async function storeTextFile(
+  ctx: ActionCtx,
+  path: string,
+  text: string,
+  contentType: string,
+) {
+  const bytes = new TextEncoder().encode(text);
+  const sha256 = await sha256Hex(bytes);
+  const storageId = await ctx.storage.store(new Blob([bytes], { type: contentType }));
+  return {
+    path,
+    size: bytes.byteLength,
+    storageId,
+    sha256,
+    contentType,
+  };
 }
 
 function toHex(bytes: Uint8Array) {

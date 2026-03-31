@@ -6,10 +6,12 @@ import type { PublicAgent, PublicUser } from "../lib/publicUser";
 import { AgentDetailPage } from "./AgentDetailPage";
 
 const useQueryMock = vi.fn();
+const useActionMock = vi.fn();
 const agentFilesPanelMock = vi.fn();
 
 vi.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => useQueryMock(...args),
+  useAction: (...args: unknown[]) => useActionMock(...args),
 }));
 
 vi.mock("./AgentFilesPanel", () => ({
@@ -56,6 +58,8 @@ function makeAgent(
 describe("AgentDetailPage", () => {
   beforeEach(() => {
     useQueryMock.mockReset();
+    useActionMock.mockReset();
+    useActionMock.mockReturnValue(vi.fn());
     agentFilesPanelMock.mockReset();
   });
 

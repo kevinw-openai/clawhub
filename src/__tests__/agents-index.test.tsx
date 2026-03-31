@@ -8,6 +8,7 @@ import { AgentsIndex } from "../routes/agents/index";
 const navigateMock = vi.fn();
 let searchMock: Record<string, unknown> = {};
 const useQueryMock = vi.fn();
+const useActionMock = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (_config: { component: unknown; validateSearch: unknown }) => ({
@@ -19,6 +20,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 vi.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => useQueryMock(...args),
+  useAction: (...args: unknown[]) => useActionMock(...args),
 }));
 
 function makeAgent(slug: string, displayName: string, installs: number, ownerHandle?: string) {
@@ -46,6 +48,8 @@ describe("AgentsIndex", () => {
   beforeEach(() => {
     navigateMock.mockReset();
     useQueryMock.mockReset();
+    useActionMock.mockReset();
+    useActionMock.mockReturnValue(vi.fn());
     searchMock = {};
   });
 
